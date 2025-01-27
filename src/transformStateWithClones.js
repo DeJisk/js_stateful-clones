@@ -7,54 +7,52 @@
  * @return {Object[]}
  */
 function transformStateWithClones(state, actions) {
-  const results = [];
-  const stateCopy = { ...state };
+  const results = [{ ...state }];
 
-  for (const obj of actions) {
-    const { type } = obj;
+  for (let i = 0; i < actions.length; i++) {
+    const { type } = actions[i];
 
     switch (type) {
       case 'addProperties':
-        results.push(addProperties(stateCopy, { ...stateCopy }, obj.extraData));
+        results.push(addProperties({ ...results[i] }, actions[i].extraData));
         break;
 
       case 'removeProperties':
         results.push(
-          removeProperties(stateCopy, { ...stateCopy }, obj.keysToRemove),
+          removeProperties({ ...results[i] }, actions[i].keysToRemove),
         );
         break;
 
       case 'clear':
-        results.push(clearProperties(stateCopy, { ...stateCopy }));
+        results.push(clearProperties({ ...results[i] }));
         break;
     }
   }
+  results.shift();
 
   return results;
 }
 
-function addProperties(copy, stateCopy, extraData) {
-  Object.assign(copy, extraData);
-
+function addProperties(stateCopy, extraData) {
   return Object.assign(stateCopy, extraData);
 }
 
-function removeProperties(copy, stateCopy, keysToRemove) {
+function removeProperties(stateCopy, keysToRemove) {
   for (const key of keysToRemove) {
-    delete copy[key];
-    delete stateCopy[key];
+    if (key in stateCopy) {
+      // Надійна перевірка наявності ключа
+      delete stateCopy[key];
+    }
   }
 
   return stateCopy;
 }
 
-function clearProperties(copy, stateCopy) {
+function clearProperties(stateCopy) {
   for (const key in stateCopy) {
-    delete copy[key];
     delete stateCopy[key];
   }
 
   return stateCopy;
 }
-
 module.exports = transformStateWithClones;
